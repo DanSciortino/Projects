@@ -1,119 +1,82 @@
-from time import sleep
 import datetime
-from random import *
-import sys
-import argparse
-import textwrap
+from functions import *
 
 from phue import Bridge
 from darksky import forecast
 
-# Place holder before working on color transitions for 
-# the weather dictionaries
-x=1
-# Different Dictionaries for all the
-# weather patterns
-clear = {'hue':0000,'sat':254, 'ct':154}
-breezy = {'hue':33000,'sat':254}
-partlyCloudy = {'hue':35000,'sat':x,'bri':84}
-cloudy = {'hue':x,'sat':x}
-sunny = {'hue':x,'sat':x}
-lightRain = {'hue':x,'sat':x}
-mediumRain = {'hue':x,'sat':x}
-heavyRain = {'hue':x,'sat':x}
-lightSnow = {'hue':x,'sat':x}
-mediumSnow = {'hue':x,'sat':x}
-heavySnow = {'hue':x,'sat':x}
-
+conditions = ['heavy', 'light', 'rain', 'snow', 'sunny',
+        'clear', 'partly', 'cloudy', 'breezy', 'overcast']
 # Define the output light
-output = 7
+hueOut = 7
 
-# Overloading the range function, Used for testing
-# @param starting value, ending value, value to step by
-# @return numbered range
-def range(start, end, step):
-	while start <= end:
-		yield start
-		start += step
+'''
+define the keys needed for the darksky api
+the hue lights
+the ip address of the hue bridge
+and the longitude and the latitude
+'''
 
-key = ''
-hue = ''
-ip = ''
+key = 'af1fddaa8d0705f1a3d4be8e09464ab0'
+hue = 'cS6LwGOCrzY0FJ6CqHNiQHZxm9yanIc7N1icvVet'
+ip = '192.168.1.139'
 longLat = 36.848889, -76.012381
 
-b = Bridge(ip,hue)
-parse = argparse.ArgumentParser(prog='huestation.py',
-formatter_class=argparse.RawDescriptionHelpFormatter,description=textwrap.dedent('''\
-			                   __ _        _   _            
-			  /\  /\_   _  ___/ _\ |_ __ _| |_(_) ___  _ __  
-			 / /_/ / | | |/ _ \ \| __/ _` | __| |/ _ \| '_ \ 
-			/ __  /| |_| |  __/\ \ || (_| | |_| | (_) | | | |
-			\/ /_/  \__,_|\___\__/\__\__,_|\__|_|\___/|_| |_|
-			This application will read weather from dark sky api
-			And output it onto a hue light
-			A debug mode is developed for testing
-			It will take the same name of the dictionary
-			This is used for testing certain color patterns
-			
+debugFlag = parseCommand()
 
-			Powered by Dark Sky
-			'''))
-group = parse.add_mutually_exclusive_group(required=False)
-group.add_argument('-d',
-					action='store_true',
-                    default=False,
-                    dest='debugFlag',
-                    help="Enables Debugging mode with extra logging, also "
-                    "enables the end user to manually play a scene")
+'''
+Checks to see if the time is between 9am and 8pm or
+if the debug flag has been raised
+other wise do not run
+'''
+b = Bridge(ip, hue)
 
-group.add_argument('-r',
-					action='store_true',
-                    default=False,
-                    dest='randomize',
-                    help='Randomize the color of the designated light for huestation') 
-args = parse.parse_args()
-
-if(args.debugFlag):
-	import logging
-	logging.basicConfig()
-	print('debugs')
-
-elif(args.randomize):
-	# randomize the state of the light
-	# b.set_light(output,'bri',randint(1,254))
-	b.set_light(output,'hue',randint(1,65535))
-	b.set_light(output,'sat',randint(1,254))
-	exit()
-
-# Checks to see if the time is between 9am and 8pm 
-# else print a message
-if(datetime.datetime.now().hour in range (9,20,1) or 
-	args.debugFlag == True):
+if(datetime.datetime.now().hour in range (9, 20, 1) or debugFlag):
 	with forecast(key, *longLat) as longLat:
+		
+		'''
+		Get the weather for the next hour and save it into a
+		signal variable
+		'''
 		upcommingSummary = longLat.hourly[1].summary
-		print(upcommingSummary)
 
-		if(b.get_light(output,'on')== False):
+		'''
+		manipulate the encoding of the string from a unicode
+		string to an ascii string and ignoring the u printed
+		before each value in the list, also make all text lower case
+		'''
+		upcommingSummary = upcommingSummary.encode('ascii', 'ignore')
+		upcommingSummary = upcommingSummary.lower()
+
+		'''
+		split the the lower case text into list and compare that
+		newly created list agaisnt a known conditions list
+		makes a new string with just the values from the conditions
+		list
+		'''
+		weather = upcommingSummary.split()
+		outputForecast = set(weather).intersection(conditions)
+		weather = ' '.join(map(str, outputForecast))
+		print(weather)
+
+		'''
+		check the status of the output light
+		'''
+
+		if(b.get_light(hueOut, 'on') == False):
 			print('Turning light on\n')
-			b.set_light(output,'on',True)
-			b.set_light(output,'bri',127)
-
-		if (upcommingSummary.find('Clear') != -1 or sys.argv[2] == 'clear'):
-			b.set_light(output,'ct',clear['ct'],transitiontime=10)
-		elif (upcommingSummary.find('Cloudy') != -1 or sys.argv[2] == 'cloudy'):	
-			b.set_light(output,'bri',partlyCloudy['bri'],transitiontime=50)
-			b.set_light(output,'hue',partlyCloudy['hue'],transitiontime=50)
+			b.set_light(hueOut, 'on', True)
+			b.set_light(hueOut, 'bri', 127)
+		elif(b.get_light(hueOut, 'on') == True):
+			print('Turning light off\n')
+			b.set_light(hueOut, 'on', False)
+			b.set_light(hueOut, 'on', True)
 
 
-		# for i in range(0,65535,1000):
-		# 	b.set_light(output,'hue',i)
-		# 	b.set_light(output,'sat',254)
-		# 	print(i)
-		# 	sleep(.3)  	
+		def test(str):
+			return{
+				'clear':b.set_light(hueOut, 'ct', 154, transitiontime=10),
+				'cloudy':(b.set_light(hueOut, 'bri', 84, transitiontime=20),
+						b.set_light(hueOut, 'hue', 35000, transitiontime=20)),
+			}.get(x)
 else:
 	exit()
-
-# Ranges
-# hue 0...65535
-# sat 0...254 
-# ct  154...500
