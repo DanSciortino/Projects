@@ -10,7 +10,7 @@ from phue import Bridge
 hue = ''
 ip = ''
 
-b = Bridge(ip,hue)
+b = Bridge(ip, hue)
 
 '''
  Top level window properties
@@ -25,7 +25,7 @@ root.title('HueyGui')
 '''
 briScale = Scale(root, from_ = 254, to = 0,
 				command = lambda x: 
-				b.set_light(7,{'bri': int(x), 'transitiontime': 1}),
+				b.set_light(7, {'bri': int(x), 'transitiontime': 1}),
 				label = 'Brightness',
 				length = 500, showvalue = 1)
 
@@ -40,7 +40,7 @@ briScale.pack(padx = 10, pady = 40, side = LEFT)
 
 hueScale = Scale(root, from_ = 65535, to = 0,
 					command = lambda x:
-					b.set_light(7,{'hue': int(x), 'transitiontime': 1}),
+					b.set_light(7, {'hue': int(x), 'transitiontime': 1}),
 					label = 'Hue',
 					length = 500, showvalue = 1)
 
@@ -54,11 +54,24 @@ hueScale.pack(padx = 20, pady = 40, side = LEFT)
 '''
 satScale = Scale(root, from_ = 254, to = 0,
 					command = lambda x:
-					b.set_light(7,{'sat': int(x), 'transitiontime': 1}),
+					b.set_light(7, {'sat': int(x), 'transitiontime': 1}),
 					label = 'Saturation',
 					length = 500, showvalue = 1)
 
 satScale.set(b.get_light(7,'sat'))
-satScale.pack(padx = 40, pady = 40,side = LEFT)
+satScale.pack(padx = 40, pady = 40, side = LEFT)
+
+'''
+ Color Tempature scale range 500..154
+ 	slider length of 500 pixels
+ 	single light assignment
+'''
+ctScale = Scale(root,from_ = 500, to = 154,
+					command = lambda x:
+					b.set_light(7, {'ct': int(x), 'transitiontime': 1}),
+					label = 'Color Temperature',
+					length = 500, showvalue = 1)
+ctScale.set(b.get_light(7,'ct'))
+ctScale.pack(padx = 40, pady = 40, side = LEFT)
 
 root.mainloop()

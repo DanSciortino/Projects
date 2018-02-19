@@ -4,8 +4,9 @@ from functions import *
 from phue import Bridge
 from darksky import forecast
 
-conditions = ['heavy', 'light', 'rain', 'snow', 'sunny',
-        'clear', 'partly', 'cloudy', 'breezy', 'overcast']
+conditions = ['heavy', 'light', 'rain', 'snow', 'sunny', 'clear', 'partly',
+			'cloudy', 'breezy', 'overcast']
+
 # Define the output light
 hueOut = 7
 
@@ -16,10 +17,10 @@ the ip address of the hue bridge
 and the longitude and the latitude
 '''
 
-key = 'af1fddaa8d0705f1a3d4be8e09464ab0'
-hue = 'cS6LwGOCrzY0FJ6CqHNiQHZxm9yanIc7N1icvVet'
-ip = '192.168.1.139'
-longLat = 36.848889, -76.012381
+key = ''
+hue = ''
+ip = ''
+longLat = 
 
 debugFlag = parseCommand()
 
@@ -30,7 +31,7 @@ other wise do not run
 '''
 b = Bridge(ip, hue)
 
-if(datetime.datetime.now().hour in range (9, 20, 1) or debugFlag):
+if(datetime.datetime.now().hour in range(9, 20, 1) or debugFlag):
 	with forecast(key, *longLat) as longLat:
 		
 		'''
@@ -63,20 +64,25 @@ if(datetime.datetime.now().hour in range (9, 20, 1) or debugFlag):
 		'''
 
 		if(b.get_light(hueOut, 'on') == False):
-			print('Turning light on\n')
+			print('Turning light on')
 			b.set_light(hueOut, 'on', True)
 			b.set_light(hueOut, 'bri', 127)
 		elif(b.get_light(hueOut, 'on') == True):
-			print('Turning light off\n')
+			print('Turning light off')
 			b.set_light(hueOut, 'on', False)
 			b.set_light(hueOut, 'on', True)
 
-
-		def test(str):
-			return{
-				'clear':b.set_light(hueOut, 'ct', 154, transitiontime=10),
-				'cloudy':(b.set_light(hueOut, 'bri', 84, transitiontime=20),
-						b.set_light(hueOut, 'hue', 35000, transitiontime=20)),
-			}.get(x)
+			def test(str):
+				return{
+					'clear':(b.set_light(hueOut, 'ct', 154, transitiontime = 10),
+							b.set_light(hueOut, 'sat', 181, transitiontime = 5)),
+					'cloudy':(b.set_light(hueOut, 'bri', 84, transitiontime = 20),
+							b.set_light(hueOut, 'hue', 35000, transitiontime = 20)),
+					'overcast:':(b.set_light(hueOut, 'bri', 110, transitiontime = 20),
+							b.set_light(hueOut, 'hue', 35568, transitiontime = 20),
+							b.set_light(hueOut, 'sat', 177, transitiontime = 20),
+							b.set_light(hueOut, 'ct', 232, transitiontime = 20)),
+				}.get(x)
 else:
+	print('Sleep Mode Activated')
 	exit()
